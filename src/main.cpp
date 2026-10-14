@@ -13,7 +13,6 @@
 #include <limits>
 #include <string>
 #include <vector>
-#include <bits/basic_string.h>
 #include "gates.hpp"
 #include "ground.hpp"
 #include "ride.hpp"

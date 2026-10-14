@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <string>
 #define CHECK(c) do { if (!(c)) { std::printf("FALLO %s:%d %s\n", __FILE__, __LINE__, #c); std::exit(1); } } while (0)
 using Tri = Ground::Tri;
 static Tri tri(V3 a, V3 b, V3 c, uint16_t s) { Tri t{{a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z}, s}; return t; }
@@ -19,8 +21,8 @@ int main() {
       k = Keys(); k.space = true; CHECK(!unpackInput(packKeys(k, false)).hop && unpackInput(packKeys(k, true)).hop);
       k = Keys(); k.q = true; CHECK(unpackInput(packKeys(k, false)).lean == 1.f); k = Keys(); k.e = true; CHECK(unpackInput(packKeys(k, false)).lean == -1.f); k = Keys(); k.shift = true; CHECK(unpackInput(packKeys(k, false)).sprint); }
     // registro: ida y vuelta por archivo; cabecera inválida se rechaza
-    { std::vector<uint8_t> v = {0, 1, 3, 255, 64}, w; const char* p = "/tmp/dh_controls_test.in"; CHECK(saveInputs(p, v) && loadInputs(p, w) && v == w);
-      FILE* f = std::fopen(p, "wb"); std::fputs("nada", f); std::fclose(f); CHECK(!loadInputs(p, w)); std::remove(p); }
+    { std::vector<uint8_t> v = {0, 1, 3, 255, 64}, w; const std::string p = (std::filesystem::temp_directory_path() / "dh_controls_test.in").string(); CHECK(saveInputs(p.c_str(), v) && loadInputs(p.c_str(), w) && v == w);
+      FILE* f = std::fopen(p.c_str(), "wb"); std::fputs("nada", f); std::fclose(f); CHECK(!loadInputs(p.c_str(), w)); std::remove(p.c_str()); }
     Ground g = flat();
     // acelerar: sube la velocidad hasta una cota (no crece sin límite)
     { Bike b = settled(g); std::vector<uint8_t> acc(60 * 20, kInThrottle); run(b, g, acc); float v20 = b.speed(); run(b, g, acc); float v40 = b.speed();

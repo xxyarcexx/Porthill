@@ -1,0 +1,59 @@
+name: build
+
+# Compila y ejecuta la suite de tests en Windows y Linux SIN datos del juego.
+# Los tests no dependen de SDL3; el visor se compila aparte con SDL3 fijada.
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: unit tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure (tests only, sin SDL3)
+        run: cmake -S . -B build -DDH_BUILD_VIEWER=OFF
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+
+  sanitizers:
+    name: sanitizers (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure (ASan + UBSan)
+        run: cmake -S . -B build -DDH_BUILD_VIEWER=OFF -DDH_SANITIZE=ON -DCMAKE_BUILD_TYPE=Debug
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  viewer:
+    name: viewer compile (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: SDL3 build deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libx11-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev \
+            libxfixes-dev libxss-dev libwayland-dev libxkbcommon-dev \
+            libegl1-mesa-dev libgl1-mesa-dev libdbus-1-dev
+      - name: Configure (SDL3 fijada via FetchContent)
+        run: cmake -S . -B build -DDH_FETCH_SDL3=ON -DDH_SDL3_TAG=release-3.4.18 -DSDL_TEST_LIBRARY=OFF
+      - name: Build dhview
+        run: cmake --build build --config Release --target dhview

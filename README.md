@@ -103,6 +103,22 @@ cd build && ctest                    # ground, contact, bike and integrator unit
 ./build/dhview level.mdl             # WASD + mouse, Shift = fast, F = fly/walk, Esc = quit
 ```
 
+### Windows (MSVC)
+
+Requirements: **Visual Studio 2022 Build Tools** with the **x64** C++ toolchain and a **Windows SDK** (*Desktop development with C++*), and **CMake ≥ 3.20**. For the viewer you also need **SDL3** (or pass `-DDH_FETCH_SDL3=ON` to fetch a pinned version). The unit tests do **not** need SDL3.
+
+```bat
+:: from an "x64 Native Tools Command Prompt for VS 2022"
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+:: build the viewer, fetching a pinned SDL3 if it is not installed:
+cmake -S . -B build -DDH_FETCH_SDL3=ON
+cmake --build build --config Release --target dhview
+```
+
+Tests-only build without SDL3 (no viewer): `cmake -S . -B build -DDH_BUILD_VIEWER=OFF`.
+
 Play the prototype on a level you exported (see the workflow below):
 
 ```sh

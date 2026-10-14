@@ -1,0 +1,13 @@
+# Configuración mínima de clang-tidy (análisis estático, sin reescritura de código).
+# Uso:  clang-tidy -p build src/pts.hpp src/ngp.hpp tests/pts_check.cpp
+# Checks conservadores para no generar ruido en el código existente; no bloquea CI por ahora.
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  performance-*,
+  modernize-use-nullptr,
+  modernize-use-override
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(src|tests)/'
+FormatStyle: none
