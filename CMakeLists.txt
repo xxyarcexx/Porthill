@@ -62,6 +62,8 @@ add_executable(sweep_cli tests/sweep_cli.cpp)
 add_executable(ngp_col_check tests/ngp_col_check.cpp)
 add_executable(pts_check tests/pts_check.cpp)          # lector .PTS nativo; sin argumentos corre el test sintético
 add_test(NAME pts_check COMMAND pts_check)
+add_executable(collision_source_test tests/collision_source_test.cpp)   # adaptador NGP->Ground; sin argumentos corre el test sintético
+add_test(NAME collision_source_test COMMAND collision_source_test)
 add_executable(bike_test tests/bike_test.cpp)
 add_test(NAME bike_test COMMAND bike_test)
 add_executable(race_test tests/race_test.cpp)

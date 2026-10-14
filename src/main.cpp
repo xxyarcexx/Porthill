@@ -15,6 +15,7 @@
 #include <vector>
 #include "gates.hpp"
 #include "ground.hpp"
+#include "collision_source.hpp"   // DH_NGP: colisión nativa desde el .NGP (lector src/ngp.hpp); .col sigue siendo el camino por defecto
 #include "ride.hpp"
 #include <map>
 #include <unordered_map>
@@ -203,6 +204,16 @@ int main(int argc, char** argv) {
     std::string colPath = std::getenv("DH_COL") ? std::getenv("DH_COL") : (mdl ? std::string(argv[1]).substr(0, std::string(argv[1]).size() - 4) + ".col" : std::string());   // por defecto: <modelo>.col junto al .mdl
     if (!colPath.empty()) { const char* cp = colPath.c_str(); std::vector<uint8_t> probe; if (!std::getenv("DH_COL") && !readFile(cp, probe)) cp = nullptr;
       if (cp) { std::vector<uint8_t> craw; if (readFile(cp, craw) && gcol.load(craw)) { for (const auto& t : gcol.tris()) for (int e = 0; e < 3; e++) { colLines.insert(colLines.end(), t.v + 3*e, t.v + 3*e + 3); colLines.insert(colLines.end(), t.v + 3*((e+1)%3), t.v + 3*((e+1)%3) + 3); } std::printf("colisión: %zu triángulos (%s)\n", gcol.tris().size(), cp); } else std::fprintf(stderr, "aviso: colisión %s no válida\n", cp); } }
+    // DH_NGP=nivel.NGP (YA descomprimido): construye la colisión con el lector nativo (src/ngp.hpp via collision_source) en vez de <modelo>.col.
+    // NO lee el contenedor IE comprimido; si falla, conserva la colisión previa. Sin DH_NGP el comportamiento es idéntico al anterior.
+    if (const char* np = std::getenv("DH_NGP")) {
+        std::vector<uint8_t> nraw; std::vector<Ground::Tri> nt;
+        if (readFile(np, nraw) && collision_source::fromNgp(nraw, nt)) {
+            gcol.set(std::move(nt)); colLines.clear();
+            for (const auto& t : gcol.tris()) for (int e = 0; e < 3; e++) { colLines.insert(colLines.end(), t.v + 3*e, t.v + 3*e + 3); colLines.insert(colLines.end(), t.v + 3*((e+1)%3), t.v + 3*((e+1)%3) + 3); }
+            std::printf("colisión (NGP nativo): %zu triángulos (%s)\n", gcol.tris().size(), np);
+        } else std::fprintf(stderr, "aviso: DH_NGP=%s no válido (¿NGP descomprimido?); se mantiene la colisión previa\n", np);
+    }
     auto groundY = [&](float x, float z, float ymax) {
         if (!colLines.empty()) { auto g = gcol.groundQuery(x, ymax, z, 0.f, ymax - gcol.boundsMin().y + 1.f); return g.hit ? g.height : (float)NAN; }   // alcance = hasta el fondo de la malla (sin constantes)
         float best = NAN; int cx = (int)((x - gx0) / cell), cz = (int)((z - gz0) / cell);
